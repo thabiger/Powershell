@@ -72,11 +72,11 @@ function import-mailcontacts(){
             $c.'Adres e-mail' = "$([guid]::NewGuid())@$($bulkmail_domain)"   
         }
 
-        $displayName = "$($c.'Imię') $($c.'Nazwisko')".trim() -or $name
+        $displayName = "$($c.'Imię') $($c.'Nazwisko')".trim()
         if (!$displayName) { continue }
  
         New-MailContact -Name $name -DisplayName $displayName -ExternalEmailAddress $c.'Adres e-mail' -FirstName $c.'Imię' -LastName $c.'Nazwisko'
-        Get-MailContact | ? { $c.Name -eq $name } | Set-Contact -StreetAddress $c.'Adres Służbowy' `
+        Get-MailContact | ? { $_.Name -eq $name } | Set-Contact -StreetAddress $c.'Adres Służbowy' `
             -Phone $c.'Telefon służbowy' `
             -MobilePhone $c.'Telefon komórkowy' `
             -Company $c.'Firma' `
