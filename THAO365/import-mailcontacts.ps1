@@ -74,7 +74,6 @@ function import-mailcontacts(){
 
         $displayName = "$($c.'Imię') $($c.'Nazwisko')".trim() -or $name
         if (!$displayName) { continue }
-        $c
  
         New-MailContact -Name $name -DisplayName $displayName -ExternalEmailAddress $c.'Adres e-mail' -FirstName $c.'Imię' -LastName $c.'Nazwisko'
         Get-MailContact | ? { $c.Name -eq $name } | Set-Contact -StreetAddress $c.'Adres Służbowy' `
