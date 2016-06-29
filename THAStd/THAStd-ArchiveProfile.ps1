@@ -12,7 +12,7 @@ Script makes a zip archive of every profile that account is disabled or does no 
 Archive-Profile -ProfilePathBaseDir "E:\Users" `
     -ProfileArchiveBasePath "E:\ArchivedProfiles" `
     -Exclude ("Default", "User1") `
-    -Verbose 
+    -Verbose -Force
 
 .NOTES
 
@@ -95,18 +95,15 @@ function Archive-Profile(){
         $ProfilePath = “{0}\{1}” -f $ProfilePathBaseDir, $_
         $ProfileArchivePath = “{0}\{1}” -f $ProfileArchiveBasePath, $_
 
-        if (( -not (Get-ADUser -Filter {SamAccountName -eq $ProfileName} )) -and ($ProfileName -notin $Exclude)){
+        if (($ProfileName -notin $Exclude) -and (-not (Get-ADUser -Filter {SamAccountName -eq $ProfileName} ))){
             Write-Verbose "Orphaned profile: $($_)"
-            if ( -not (Remove-IfEmpty($ProfilePath))) {
-               if ($Force) { Archive $ProfilePath $ProfileArchivePath -Force } 
-                 else { Archive $ProfilePath $ProfileArchivePath } 
-            }
-        } elseif (( -not (Get-ADUser -Filter {SamAccountName -eq $ProfileName}).Enabled ) -and ($ProfileName -notin $Exclude)){
+        } elseif (($ProfileName -notin $Exclude) -and (-not (Get-ADUser -Filter {SamAccountName -eq $ProfileName}).Enabled )){
             Write-Verbose "Disabled profile: $($_)"
-            if ( -not (Remove-IfEmpty($ProfilePath))) {
-               if ($Force) { Archive $ProfilePath $ProfileArchivePath -Force } 
+        } else { continue }
+        if ( -not (Remove-IfEmpty($ProfilePath))) {
+            if ($Force) { Archive $ProfilePath $ProfileArchivePath -Force } 
                  else { Archive $ProfilePath $ProfileArchivePath } 
-            }
-        } 
+        }
     }
 }
+
