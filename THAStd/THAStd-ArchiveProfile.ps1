@@ -22,7 +22,7 @@ Date: June 2016
 The content of this script is copyrighted to the author. It is provided AS IS, and no warranty of ANY kind is provided. Use it at your own risk!
 
 #>
-function Archive-Profile(){
+function Compress-Profile(){
     [CmdletBinding(
         SupportsShouldProcess=$true,
         ConfirmImpact="High"
