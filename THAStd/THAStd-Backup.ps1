@@ -146,8 +146,6 @@ function Start-Backup {
         [switch]$preserveSrcBlob
     )
 
-    Write-Debug "Parameter set: $($PSCmdlet.ParameterSetName)"
-
     $backup =  Backup-Files -type $type `
             -name $name `
             -source $source `
@@ -156,7 +154,9 @@ function Start-Backup {
             -archDays $archDays 
     $backup | Add-THAFlatDir -jobname $name -logdir $logdir 
 
-    $Compress_A = @( { Compress-THADirectory } , { Compress-THADirectory -preserve } )[$preserveSrcDir.ToBool()]
+    Write-Debug "Parameter set: $($PSCmdlet.ParameterSetName)"
+
+    $Compress_A = @( { Compress-THAIonicDirectory -MaxOutputSegmentSize 2048 } , { Compress-THAIonicDirectory -MaxOutputSegmentSize 2048 -preserve } )[$preserveSrcDir.ToBool()]
         
     $Encrypt_AM1 = @( { Invoke-Command $Compress_A | Add-THAEncryption -password $password },
                       { Invoke-Command $Compress_A | Add-THAEncryption -password $password -preserve })[$preserveSrcArch.ToBool()]
