@@ -173,20 +173,14 @@ function Add-FlatDir {
 
         $targetdir | Get-THATooLongPaths | ForEach-Object {
                 $sufix = -join( 1..8 | % { ([char]((65..90) + (97..122) | Get-Random))})
-                $object = Get-Item -LiteralPath $_.FullName -Force
-                if ($object.GetType() -eq [System.IO.FileInfo]){
-                    $object = if ($object.PSParentPath | Test-Path) { 
-                        $object.PSParentPath | Get-Item
-                    } else { 
-                        continue   #that means that parent directory was already processed 
+                if ($object = Get-Item -LiteralPath $_.FullName -Force) {
+                    try {
+                        ((robocopy $object.FullName "$flatDir\$($object.name)-$sufix" $robocopyParams)) | Out-Null
+                        $object | Export-Clixml "$flatDir\$($object.name)-$sufix\.flatinfo.xml"
+                    } catch {
+                        Write-Error "Something went wrong while flattening directory: $targetdir |  $($_.Exception.Message)"
+                        Break
                     }
-                }
-                try {
-                    ((robocopy $object.FullName "$flatDir\$($object.name)-$sufix" $robocopyParams)) | Out-Null
-                    $object | Export-Clixml "$flatDir\$($object.name)-$sufix\.flatinfo.xml"
-                } catch {
-                    Write-Error "Something went wrong while flattening directory: $targetdir |  $($_.Exception.Message)"
-                    Break
                 }
         }
     }
@@ -234,11 +228,11 @@ function Remove-FlatDir {
     }
 
     process {
-        Get-ChildItem $targetdir/.flattened | ? {$_.name -ne ".flattened"} | ForEach-Object {
-            $object = Import-Clixml "$($_.FullName)/.flatinfo.xml"
+        Get-ChildItem $targetdir/.flattened -Attributes Directory,Directory+Hidden| ? {$_.name -ne ".flattened"} | ForEach-Object {
             try {
+                $object = Import-Clixml "$($_.FullName)\.flatinfo.xml"
                 ((robocopy $_.FullName $object.Fullname $robocopyParams)) | Out-Null
-                Remove-Item "$($object.FullName)/.flatinfo.xml"
+                Remove-Item "$($object.FullName)\.flatinfo.xml"
             } catch {
                 Write-Error "Something went wrong while unflattening directory: $targetdir |  $($_.Exception.Message)"
                 Break

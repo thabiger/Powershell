@@ -32,20 +32,29 @@ function Get-TooLongPaths{
         $ErrorActionPreference = "Stop"
     }
     process {
-        $childs = $targetdir | Get-ChildItem -Attributes Directory, Directory+Hidden, !Directory, !Directory+Hidden  | foreach {
-            try {
-                $item = Get-Item -LiteralPath "$($_.FullName)" -Force
-                if (($item) -and ($item.GetType() -eq [System.IO.DirectoryInfo])){
-                    $failedPaths += ($item | Get-TooLongPaths)
-                }
-            } catch {
-                if ($_.CategoryInfo.Reason -eq "PathTooLongException") {
-                    $failedPaths.Add($item)
-                }
+        try {
+            foreach ($item in ($targetdir.GetDirectories() + $targetdir.GetFiles())) {
+               if (($item.FullName) -and (Get-Item -LiteralPath $($item.FullName) -Force)){ 
+                  if ($item.GetType() -eq [System.IO.DirectoryInfo]){
+                    [System.Collections.ArrayList]$failedPaths += ($item | Get-TooLongPaths)   #if it's a directory, go deeper
+                  }
+               } else {
+                  if (($targetdir.FullName.Length + $item.Name.Length + 1) -ge 260){
+                    $failedPaths.Add($targetdir) | Out-Null
+                  }
+                  # if could not get fullname, its failed, TODO
+               }
+            }
+        } catch {
+            if  ($_.FullyQualifiedErrorId -eq "PathTooLongException") {
+                $failedPaths.Add($targetdir) | out-null
+            } else {
+                Write-Error  "Something went wrong while getting the deepest paths of $targetdir | $($_.Exception.Message)"
+                break
             }
         }
     }
     end {
-        return $failedPaths
+        return ($failedPaths | Get-Unique)
     }
 }
